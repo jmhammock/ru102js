@@ -11,6 +11,10 @@
     "rules": {
         "no-console": "off",
         "no-restricted-syntax": "off",
-        "no-prototype-builtins": "off"
+        "no-prototype-builtins": "off",
+        "linebreak-style": [
+            "error",
+            "windows"
+        ]
     }
 }

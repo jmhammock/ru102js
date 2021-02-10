@@ -100,13 +100,16 @@ const findAll = async () => {
   const siteIdsKey = keyGenerator.getSiteIDsKey();
 
   const siteKeys = await client.smembersAsync(siteIdsKey);
+  const pipeline = client.batch();
 
-  const sites = Promise.all(siteKeys.map(async (siteKey) => {
-    const siteHash = await client.hgetallAsync(siteKey);
-    return remap(siteHash);
-  }));
+  for (const siteKey of siteKeys) {
+    pipeline.hgetall(siteKey);
+  }
 
-  return sites;
+  const results = await pipeline.execAsync();
+
+  return results.map(result => remap(result));
+
   // END CHALLENGE #1
 };
 /* eslint-enable */

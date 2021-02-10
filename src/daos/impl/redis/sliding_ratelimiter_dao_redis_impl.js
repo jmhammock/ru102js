@@ -1,3 +1,4 @@
+const shortId = require('shortid');
 const redis = require('./redis_client');
 /* eslint-disable no-unused-vars */
 const keyGenerator = require('./redis_key_generator');
@@ -9,9 +10,17 @@ const timeUtils = require('../../../utils/time_utils');
 // Challenge 7
 const hitSlidingWindow = async (name, opts) => {
   const client = redis.getClient();
+  const rateLimiterKey = keyGenerator.getRateLimiterKey(name, opts.interval, opts.maxHits);
+  const transaction = client.multi();
 
   // START Challenge #7
-  return -2;
+  const now = timeUtils.getCurrentTimestampMillis();
+  transaction.zadd(rateLimiterKey, now, `${now}-${shortId.generate()}`);
+  transaction.zremrangebyscore(rateLimiterKey, 0, now - opts.interval);
+  transaction.zcard(rateLimiterKey);
+
+  const results = await transaction.execAsync();
+  return parseInt(results[2], 10) > opts.maxHits ? -1 : opts.maxHits - parseInt(results[2], 10);
   // END Challenge #7
 };
 
